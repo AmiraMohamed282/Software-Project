@@ -42,8 +42,7 @@ export default function SignUp() {
     let response = await register(
       emailRef.current,
       passwordRef.current,
-      userNameRef.current,
-      profileRef.current
+      userNameRef.current
     );
     setLoding(false);
 

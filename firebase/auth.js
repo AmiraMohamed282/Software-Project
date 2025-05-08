@@ -7,7 +7,7 @@ import {
   sendPasswordResetEmail,
 } from "@firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "./config"
+import { auth, db ,usersRef} from "./config"
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // create context
@@ -80,23 +80,24 @@ const AuthContextProvider = ({ children }) => {
       .catch((error) => console.log(error.message));
   };
 
-  const register = async (email, password, username, profileUrl) => {
+  const register = async (email, password, username) => {
     try {
-      // register
       const response = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      // console.log("responce.user : ", response?.user);
+      console.log("responce.user : ", response?.user);
 
       await setDoc(doc(db, "users", response?.user?.uid), {
         username,
-        profileUrl,
         email,
-        password,
         userId: response?.user?.uid,
+      }).catch((err) => {
+        console.log("Firestore Error:", err.message);
       });
+
+      console.log("user created : ", response?.user);
       return { success: true, Data: response?.user };
     } catch (error) {
       let msg = error?.message;
@@ -106,6 +107,7 @@ const AuthContextProvider = ({ children }) => {
       return { success: false, msg };
     }
   };
+
 
   return (
     <>
