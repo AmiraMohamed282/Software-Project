@@ -8,6 +8,7 @@ import 'react-native-gesture-handler';
 
 
 const MainLayout = () => {
+  
   const { isAuthenticated } = useAuth();
   const segments = useSegments();
   const router = useRouter();
