@@ -5,7 +5,7 @@ import {
   signOut,
   updateCurrentUser,
   sendPasswordResetEmail,
-} from "@firebase/auth";
+} from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db ,usersRef} from "./config"
 import { doc, getDoc, setDoc } from "firebase/firestore";

@@ -44,7 +44,9 @@ export default function Login() {
     console.log("sign in response ");
     if (!response.success) {
       Alert.alert("Sign In ", response.msg);
-    }
+    }else {
+    router.replace("/(tabs)/home"); // هنا بتوديك على صفحة الهوم
+  }
   };
   return (
     <SafeAreaView style={styles.container}>
@@ -165,11 +167,11 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   linkText: {
-    color: "#f57c00",
+    color: "#30633e",
     fontSize: 13,
   },
   loginButton: {
-    backgroundColor: "#f57c00",
+    backgroundColor: "#30633e",
     paddingVertical: 15,
     borderRadius: 14,
     alignItems: "center",
@@ -190,7 +192,7 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     fontSize: 13,
-    color: "#f57c00",
+    color: "#30633e",
   },
   eyeButton: {
     position: "absolute",
