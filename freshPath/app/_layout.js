@@ -27,7 +27,7 @@ const MainLayout = () => {
       const inApp = segments[0] === "(tabs)";
 
       if (isAuthenticated && !inApp) {
-        router.replace("/Home");
+        router.replace("/home");
       }
 
       if (isAuthenticated === false) {

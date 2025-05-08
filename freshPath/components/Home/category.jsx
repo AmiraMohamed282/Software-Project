@@ -1,6 +1,7 @@
 import { View, Text, FlatList, Image , StyleSheet, Dimensions , TouchableOpacity} from 'react-native';
 import React, { useEffect, useState , useRef} from 'react';
 import { collection, getDocs } from "firebase/firestore";
+import { useRouter } from 'expo-router';
 import { db } from '../../firebase/config';
 
 const { width, height } = Dimensions.get('window');
@@ -14,14 +15,16 @@ export default function Category() {
   useEffect(()=>{
     GetCategories();
   },[])
-  const GetCategories=async()=>{
+  const GetCategories = async () => {
     setDiets([]);
     const querySnapshot = await getDocs(collection(db, "Category"));
-      querySnapshot.forEach((doc) => {
-        setDiets(diets=>[...diets , doc.data()])
-
-});
-  }
+    const categories = [];
+    querySnapshot.forEach((doc) => {
+      categories.push({ id: doc.id, ...doc.data() }); // ناخد الـ id ونضيفه مع باقي الـ data
+    });
+    setDiets(categories); // نحط كلهم مرة واحدة بدل ما نستخدم setDiets في لوب
+  };
+  
 
   const onViewRef = useRef(({ changed }) => {
       if (changed[0].isViewable) {
@@ -44,7 +47,7 @@ export default function Category() {
         }}
       >
         <Image
-          source={{ uri: item.image }}
+          source={{ uri: item.imageUrl }}
           style={{ width: 100, height: 100, borderRadius: 50 }}
         />
         <Text style={{ marginTop: 10, fontWeight: 'bold' }}>{item.name}</Text>
@@ -55,13 +58,13 @@ export default function Category() {
     <View style={{ flex: 1, padding: 20 }}>
       <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Categories</Text>
       <FlatList
-        data={categories}
+        data={diets}
         renderItem={renderItem}
         keyExtractor={item => item.id}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
       />
-    </View>
+</View>
   )
 }
 
