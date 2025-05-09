@@ -54,7 +54,7 @@ export default function Login() {
       console.log(response.msg);
     }else {
     console.log(response.data.user)
-    router.replace("/(tabs)/home"); // هنا بتوديك على صفحة الهوم
+    router.replace("/(tabs)/home");
     console.log(response);
   }
   };
@@ -90,7 +90,7 @@ export default function Login() {
             secureTextEntry={!showPassword} // Toggle secureTextEntry based on state
             />
           <Pressable
-              onPress={() =>   {if  (passwordRef.current)setShowPassword(!showPassword)}}
+              onPress={() =>   {if(passwordRef.current)setShowPassword(!showPassword)}}
               style={styles.eyeButton}
             >
               <Text>{showPassword ? "🙈" : "👁️"}</Text>
