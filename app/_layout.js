@@ -15,21 +15,21 @@ const MainLayout = () => {
   const router = useRouter();
   const {loadUserFromStorage} = useAuth(); 
 
-  useEffect(async () => {
-    const user = await loadUserFromStorage();
-    // Check If User Is Authenticated Or Not
-    if (user?.email == "admin@email.com")
-      router.navigate("/(Admin)/(tabs)/admin");
-    else {
-      if (!user) router.replace("/Login");
-      else {
-        router.replace("/(tabs)/home");
+  useEffect(() => {
+    const initializeUser = async () => {
+      const user = await loadUserFromStorage();
+      if (user) {
+        if (user.email === "admin@email.com") {
+          router.replace("/(Admin)/(tabs)/admin");
+        } else {
+          router.replace("/(tabs)/home");
+        }
+      } else {
+        router.replace("/Login");
       }
-      const inApp = segments[0] === "(tabs)";
-      if (user && !inApp) {
-        router.replace("/(tabs)home");
-      }
-    }
+    };
+
+    initializeUser();
   }, []);
   return <Slot />;
 };

@@ -1,54 +1,56 @@
-import { View, Text , StyleSheet , Image} from 'react-native'
-import {React, useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { React, useEffect, useState } from 'react';
 import { Colors } from '../../constants/Colors';
-import { AuthContextProvider, useAuth } from "../../firebase/auth";
+import { useAuth } from "../../firebase/auth";
 
 export default function Header() {
     const [user, setUser] = useState(null);
-    const {loadUserFromStorage} = useAuth(); 
-    const fetchUser = async () => {
-        try {
-            const userData = await loadUserFromStorage();
-            console.log("Fetched User Data:", userData); // Debugging log
-            if (userData) {
-                setUser(userData); // Ensure this line is not commented out
-            } else {
-                console.log("No user data found in AsyncStorage.");
-            }
-        } catch (error) {
-            console.error("Error fetching user data:", error);
-        }
-    };
-    useEffect(() => {
+    const { loadUserFromStorage } = useAuth();
 
-        fetchUser();
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userData = await loadUserFromStorage();
+                console.log("Fetched User Data:", userData); // Debugging log
+                if (userData) {
+                    setUser(userData);
+                } else {
+                    console.log("No user data found in AsyncStorage.");
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        };
+
+        fetchUserData();
     }, []);
+
     return (
         <View style={styles.container}>
             <View style={styles.headLeft}>
-                <Text      
+                <Text
                     style={{
                         fontSize: 18,
                         color: 'black',
                     }}>
                     Welcome
                 </Text>
-                <Text 
+                <Text
                     style={{
                         fontSize: 25,
                         color: 'black',
                     }}>
                     {user?.username || 'Guest'}
                 </Text>
-        </View>
-            <Image 
-                source={''} 
+            </View>
+            <Image
+                source={''}
                 style={styles.headimg}>
             </Image>
         </View>
-    )
+    );
 }
-// backgroundColor:`${Colors.lightPrim}`}}
+
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
@@ -61,12 +63,12 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 10,
-        backgroundColor:'#498264'
+        backgroundColor: '#498264'
     },
-    headLeft:{
+    headLeft: {
         elevation: 3,
     },
-    headimg:{
+    headimg: {
         width: 40,
         height: 40,
         borderRadius: 18,

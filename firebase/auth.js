@@ -16,7 +16,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(undefined);
 
   useEffect(() => {
@@ -29,7 +28,6 @@ const AuthContextProvider = ({ children }) => {
     } else {
       await AsyncStorage.removeItem("user");
       setIsAuthenticated(false);
-      setUser(null);
     }
     });
     return unsub;
@@ -41,14 +39,6 @@ const AuthContextProvider = ({ children }) => {
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      setUser({
-        ...user,
-        username: data.username,
-        profileUrl: data.profileUrl,
-        userId: data.userId,
-        email: data.email,
-        password: data.password,
-      });
     } else {
       console.log("No such document!");
     }
@@ -133,24 +123,25 @@ const AuthContextProvider = ({ children }) => {
     }
   };
 
-    const loadUserFromStorage = async () => {
-    const storedUser = await AsyncStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      setIsAuthenticated(true);
+  const loadUserFromStorage = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setIsAuthenticated(true);
+        return parsedUser;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error loading user from storage:", error);
+      return null;
     }
-        if (storedUser) {
-        return JSON.parse(storedUser); // Ensure this returns the parsed user
-    }
-    return null;
   };
 
   return (
     <>
       <AuthContext.Provider
         value={{
-          user,
           isAuthenticated,
           login,
           register,

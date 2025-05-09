@@ -29,8 +29,8 @@ const ProfileScreen = () => {
       if (userData) {
         setUser(userData);
       } else {
-        // todo: handle no user data
         console.log("No user data found in AsyncStorage.");
+        router.replace("/Login"); // Redirect to login if no user data
       }
     };
 
