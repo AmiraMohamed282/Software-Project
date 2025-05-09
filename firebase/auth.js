@@ -84,14 +84,16 @@ const AuthContextProvider = ({ children }) => {
       return { success: false, msg };
     }
   };
-
   const logout = async () => {
     try {
       // logout
+      console.log("user logged out");
       await signOut(auth);
-      await AsyncStorage.removeItem("user");
+      await AsyncStorage.clear(); // Clear all stored data to ensure logout persists between sessions
+      console.log("user logged out");
       return { success: true };
     } catch (error) {
+      console.log("error logging out : ", error);
       return { success: false, msg: error?.message, error };
     }
   };
@@ -133,7 +135,6 @@ const AuthContextProvider = ({ children }) => {
 
     const loadUserFromStorage = async () => {
     const storedUser = await AsyncStorage.getItem("user");
-    console.log("Stored User: ", storedUser);
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);

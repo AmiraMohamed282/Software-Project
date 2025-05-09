@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5, Entypo } from '@expo/vector-icons';
 import ProfileInfo from '../ProfileInfo'
-import {auth, db} from '../../firebase/config'
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuth } from '../../firebase/auth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 
@@ -12,16 +10,27 @@ import { useRouter } from 'expo-router';
 const ProfileScreen = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const {loadUserFromStorage , logout} = useAuth(); 
   const [loading, setLoading] = useState(false);
-    useEffect(() => {
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      await logout();
+      router.replace('/Login'); // Redirect to login screen after logout
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     const fetchUserData = async () => {
-      if (auth.currentUser) {
-        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-        if (userDoc.exists()) {
-          setUser(userDoc.data());
-        } else {
-          console.log("⚠️ No user data found!");
-        }
+      const userData = await loadUserFromStorage();
+      if (userData) {
+        setUser(userData);
+      } else {
+        // todo: handle no user data
+        console.log("No user data found in AsyncStorage.");
       }
     };
 
@@ -33,6 +42,7 @@ const ProfileScreen = () => {
       {user ? (<>
           <Image
             source={{ uri: user.image || 'https://randomuser.me/api/portraits/men/15.jpg' }}
+            //todo add upload image
             style={styles.avatar}
           />
           <Text style={styles.name}> {user.username} </Text>
@@ -44,41 +54,41 @@ const ProfileScreen = () => {
       </View>
 
       <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={() => { router.replace('ProfileInfo');}}>
+        <TouchableOpacity style={styles.item} onPress={() => { router.push('/ProfileInfo'); }}>
           <Ionicons name="person-outline" size={24} style={styles.icon} />
           <Text>Profile Info</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={() => { router.replace('');}}>
-          <Ionicons name="location" size={24} style={styles.icon}/>
-          <Text> Addresses </Text>
+        <TouchableOpacity style={styles.item} onPress={() => { router.push('/category'); }}>
+          <Ionicons name="location" size={24} style={styles.icon} />
+          <Text>Addresses</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
-      <TouchableOpacity style={styles.item} onPress={() => { router.replace('');}}>
-          <Ionicons name="cart" size={24} style={styles.icon}/>
-          <Text style={styles.label}> Cart </Text>
+      <TouchableOpacity style={styles.item} onPress={() => { router.push('/cart'); }}>
+          <Ionicons name="cart" size={24} style={styles.icon} />
+          <Text style={styles.label}>Cart</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={() => { router.replace('');}}>
+        <TouchableOpacity style={styles.item} onPress={() => { router.push('/(tabs)/favorite'); }}>
           <Ionicons name="heart-outline" size={24} style={styles.icon} />
-          <Text style={styles.label}> Favourite </Text>
+          <Text style={styles.label}>Favourite</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
-      <TouchableOpacity style={styles.item} onPress={() => { router.replace('');}}>
-          <Ionicons name="help-circle-outline" size={24} style={styles.icon}/>
-          <Text style={styles.label}> FAQs </Text>
+      <TouchableOpacity style={styles.item} onPress={() => { router.push('/faq'); }}>
+          <Ionicons name="help-circle-outline" size={24} style={styles.icon} />
+          <Text style={styles.label}>FAQs</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.item} onPress={() => { router.replace('');}}>
-          <Ionicons name="star" size={24} style={styles.icon}/>
-          <Text style={styles.label}> User Reviews </Text>
+        <TouchableOpacity style={styles.item} onPress={() => { router.push('/reviews'); }}>
+          <Ionicons name="star" size={24} style={styles.icon} />
+          <Text style={styles.label}>User Reviews</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
-      <TouchableOpacity style={styles.item} onPress={() => { router.replace('');}}>
+      <TouchableOpacity style={styles.item} onPress={async () => { await handleLogout();}}>
           <Ionicons name="log-out" size={24} style={styles.icon}/>
           <Text style={styles.label}> Log Out </Text>
         </TouchableOpacity>
