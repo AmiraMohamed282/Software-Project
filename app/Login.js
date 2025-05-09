@@ -33,7 +33,7 @@ export default function Login() {
   const passwordRef = useRef("");
   const { login } = useAuth();
   const [loding, setLoding] = useState(false);
-  const [showRetypePassword, setShowRetypePassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error , setError] = useState();
 
   const handleLogin = async () => {
@@ -87,13 +87,13 @@ export default function Login() {
             placeholderTextColor="#ccc"
             // value={password}
             onChangeText={(value) => (passwordRef.current = value)}
-            secureTextEntry
+            secureTextEntry={!showPassword} // Toggle secureTextEntry based on state
             />
           <Pressable
-              onPress={() => setShowRetypePassword(!showRetypePassword)}
+              onPress={() =>   {if  (passwordRef.current)setShowPassword(!showPassword)}}
               style={styles.eyeButton}
             >
-              <Text>{showRetypePassword ? "🙈" : "👁️"}</Text>
+              <Text>{showPassword ? "🙈" : "👁️"}</Text>
             </Pressable>
           </View>
           <View style={styles.row}>

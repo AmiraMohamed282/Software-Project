@@ -68,7 +68,7 @@ const AuthContextProvider = ({ children }) => {
     try {
       // login
       const response = await signInWithEmailAndPassword(auth, email, password);
-      if (!response.user.emailVerified && !response.user.email == "admin@email.com") {
+      if (!response.user.emailVerified && !(response.user.email == "admin@email.com")) {
         await signOut(auth); // immediately sign out the user
         return { success: false, msg: "Please verify your email before logging in." };
       }

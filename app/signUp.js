@@ -24,21 +24,26 @@ import { useAuth } from "../firebase/auth";
 
 export default function SignUp() {
   const emailRef = useRef("");
-  const passwordRef = useRef("");
+  const passwordRef = useRef(""); 
+  const retypePasswordRef = useRef("");
   const userNameRef = useRef("");
   const profileRef = useRef("");
   const { register } = useAuth();
   const [loding, setLoding] = useState(false);
+  const [error, setError] = useState(""); // Add error state
 
   const handleRegister = async () => {
-    if (
-      !emailRef.current ||
-      !passwordRef.current ||
-      !userNameRef.current 
-    ) {
-      Alert.alert("Sign Up ", "Please fill all the fields");
+    if (!emailRef.current || !passwordRef.current || !userNameRef.current) {
+      setError("Please fill all the fields");
+      Alert.alert("Sign Up", "Please fill all the fields");
       return;
     }
+    if (passwordRef.current !== retypePasswordRef.current) {
+      setError("Passwords do not match");
+      Alert.alert("Sign Up", "Passwords do not match");
+      return;
+    }
+    setError(""); // Clear error before proceeding
     setLoding(true);
     let response = await register(
       emailRef.current,
@@ -48,10 +53,11 @@ export default function SignUp() {
     setLoding(false);
 
     if (!response.success) {
+      setError(response.msg || "Sign-up failed. Please try again.");
       Alert.alert("Sign Up", response.msg);
     }
-    //regster prosecc
   };
+
   const [showPassword, setShowPassword] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
 
@@ -96,7 +102,7 @@ export default function SignUp() {
               onChangeText={(value) => (passwordRef.current = value)}
             />
             <Pressable
-              onPress={() => setShowPassword(!showPassword)}
+              onPress={() =>   {if  (passwordRef.current)setShowPassword(!showPassword)}}
               style={styles.eyeButton}
             >
               <Text>{showPassword ? "🙈" : "👁️"}</Text>
@@ -111,10 +117,10 @@ export default function SignUp() {
               placeholderTextColor="#ccc"
               secureTextEntry={!showRetypePassword}
               // value={retypePassword}
-              // onChangeText={setRetypePassword}
+               onChangeText={(value) => (retypePasswordRef.current = value)}
             />
             <Pressable
-              onPress={() => setShowRetypePassword(!showRetypePassword)}
+              onPress={() =>   {if  (retypePasswordRef.current)setShowRetypePassword(!showRetypePassword)}}
               style={styles.eyeButton}
             >
               <Text>{showRetypePassword ? "🙈" : "👁️"}</Text>
@@ -122,13 +128,18 @@ export default function SignUp() {
           </View>
 
           <View>
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
             {loding ? (
               <View style={{ flexDirection: "row", justifyContent: "center" }}>
-                {/* <Loading size={hp(20)} /> */}
                 <ActivityIndicator size={"large"} color={"gray"} />
               </View>
             ) : (
-              <Pressable style={styles.signupButton} onPress={()=>handleRegister()}>
+              <Pressable style={styles.signupButton} onPress={() => handleRegister()}>
                 <Text style={styles.signupText}>SIGN UP</Text>
               </Pressable>
             )}
@@ -181,5 +192,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 15,
     fontWeight: "bold",
+  },
+  errorBox: {
+    backgroundColor: "#ffdddd",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    borderColor: "#ff5c5c",
+    borderWidth: 1,
+  },
+  errorText: {
+    color: "#cc0000",
+    fontSize: 13,
+    textAlign: "center",
   },
 });
