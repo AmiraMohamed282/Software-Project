@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 10,
+        backgroundColor:'#498264'
     },
     headLeft:{
         elevation: 3,

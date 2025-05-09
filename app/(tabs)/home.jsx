@@ -3,15 +3,14 @@ import React from 'react'
 import Header from '../../components/Home/header'
 import Slider from '../../components/Home/slider'
 import Category from '../../components/Home/category'
-import ListOfMeals from '../../components/Home/listOfMeals'
+
 
 export default function Home() {
   return (
     <View style={styles.container}>
       {/* slider */}
         <Slider/>
-      {/*meals + Category */}
-        <ListOfMeals/>
+        <Category />
     </View>
   )
 }
