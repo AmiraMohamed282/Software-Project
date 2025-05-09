@@ -19,11 +19,12 @@ const MainLayout = () => {
       try {
         const user = await loadUserFromStorage();
         if (user) {
-          if (user.email === "admin@email.com") {
-            router.replace("/(Admin)/(tabs)/admin");
-          } else {
-            router.replace("/(tabs)/home");
-          }
+          // if (user.email === "admin@email.com") {
+          //   router.replace("/(Admin)/(tabs)/admin");
+          // } else {
+          //   router.replace("/(tabs)/home");
+          // }
+          router.replace("/(tabs)/home");
         } else {
           router.replace("/Login");
         }
