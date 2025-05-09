@@ -1,51 +1,69 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5, Entypo } from '@expo/vector-icons';
-import ProfileInfo from '../ProfileInfo'
 import { useAuth } from '../../firebase/auth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-
+import { auth, db } from '../../firebase/config';
+import { doc, getDoc } from "firebase/firestore";
 
 const ProfileScreen = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [userr, setUserr] = useState(null);
   const {loadUserFromStorage , logout} = useAuth(); 
   const [loading, setLoading] = useState(false);
   const handleLogout = async () => {
     setLoading(true);
     try {
       await logout();
-      router.replace('/Login'); // Redirect to login screen after logout
+      router.replace('/Login'); 
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => {
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     const userData = await loadUserFromStorage();
+  //     if (userData) {
+  //       setUser(userData);
+  //     } else {
+  //       console.log("No user data found in AsyncStorage.");
+  //       router.replace("/Login"); // Redirect to login if no user data
+  //     }
+  //   };
+
+  //   fetchUserData();
+  // }, []);
+     useEffect(() => {
     const fetchUserData = async () => {
-      const userData = await loadUserFromStorage();
-      if (userData) {
-        setUser(userData);
-      } else {
-        console.log("No user data found in AsyncStorage.");
-        router.replace("/Login"); // Redirect to login if no user data
+      if (auth.currentUser) {
+        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+        if (userDoc.exists()) {
+          setUserr(userDoc.data());
+          console.log(userr)
+        } else {
+          console.log("⚠️ No user data found!");
+           router.replace("/Login"); 
+        }
       }
     };
 
     fetchUserData();
   }, []);
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
-      {user ? (<>
+      {userr ? (<>
           <Image
-            source={{ uri: user.image || 'https://randomuser.me/api/portraits/men/15.jpg' }}
+            source={{ uri: userr.image || 'https://randomuser.me/api/portraits/men/15.jpg' }}
             //todo add upload image
             style={styles.avatar}
           />
-          <Text style={styles.name}> {user.username} </Text>
+          <Text style={styles.name}> {userr.username} </Text>
         </>
       ) : (
         <Text>Loading...</Text>
@@ -86,7 +104,6 @@ const ProfileScreen = () => {
           <Text style={styles.label}>User Reviews</Text>
         </TouchableOpacity>
       </View>
-
       <View style={styles.section}>
       <TouchableOpacity style={styles.item} onPress={async () => { await handleLogout();}}>
           <Ionicons name="log-out" size={24} style={styles.icon}/>

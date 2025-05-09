@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from 'expo-router';
 const ProfileInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const[fullName , setFullName]= useState('');
   const [profileImage, setProfileImage] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const router = useRouter();
   useEffect(() => {
     const fetchUserData = async () => {
       if (auth.currentUser) {
@@ -18,16 +30,17 @@ const ProfileInfo = () => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          setName(userData.username || '');
-          setEmail(userData.email || '');
-          setProfileImage(userData.image || '');
+          setName(userData.username );
+          setEmail(userData.email);
+          setProfileImage(userData.image);
+          setFullName(userData.fullName)
+          console.log('User data:', userData.email);
         } else {
           console.log('⚠️ No user data found!');
         }
       }
       setLoading(false);
     };
-
     fetchUserData();
   }, []);
 
@@ -41,13 +54,95 @@ const ProfileInfo = () => {
       await updateDoc(userRef, {
         username: name,
         email: email,
-        profileImage: profileImage,
+        image: profileImage,
+        fullName: fullName,
       });
-      console.log('✅ Saved data:', { name, email, profileImage });
+      console.log('✅ Saved data:', { name, email, profileImage , fullName });
     }
     setIsEditing(false);
   };
 
+  const pickImage = () => {
+    Alert.alert(
+      'Select Image',
+      'Choose an option',
+      [
+        {
+          text: 'Take Photo',
+          onPress: () => openCamera(),
+        },
+        {
+          text: 'Choose from Gallery',
+          onPress: () => openGallery(),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const uploadImage = async (result) => {
+    if (!result.canceled && result.assets) {
+      const image = result.assets[0];
+      const formData = new FormData();
+      formData.append('file', {
+        uri: image.uri,
+        type: 'image/jpeg',
+        name: 'upload.jpg',
+      });
+      formData.append('upload_preset', 'mennah');
+
+      try {
+        const response = await fetch(
+          'https://api.cloudinary.com/v1_1/defvjnd0q/image/upload',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+        const data = await response.json();
+        if (data.secure_url) {
+          const imageUrl = data.secure_url;
+          setProfileImage(imageUrl);
+
+          if (auth.currentUser) {
+            const userRef = doc(db, 'users', auth.currentUser.uid);
+            await updateDoc(userRef, {
+              image: imageUrl,
+            });
+            console.log('✅ Image URL updated in Firestore');
+            Alert.alert('Success', 'Profile image updated successfully!');
+          }
+        } else {
+          console.log('❌ Upload failed:', data);
+          Alert.alert('Error', 'Image upload failed.');
+        }
+      } catch (error) {
+        console.log('❌ Upload error:', error);
+        Alert.alert('Error', 'Something went wrong during image upload.');
+      }
+    }
+  };
+
+  const openCamera = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+    uploadImage(result);
+  };
+
+  const openGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+    uploadImage(result);
+  };
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -58,19 +153,20 @@ const ProfileInfo = () => {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity onPress={() => router.replace('/profile')}>
+            <MaterialIcons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
       <Text style={styles.header}>Profile Info</Text>
-      <View style={styles.profileImageContainer}>
+      <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
         {profileImage ? (
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.profileImage}
-          />
+          <Image source={{ uri: profileImage }} style={styles.profileImage} />
         ) : (
           <View style={styles.placeholderImage}>
             <Text>No Image</Text>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
+
       <Text style={styles.label}>Name:</Text>
       <TextInput
         style={[styles.input, !isEditing && styles.disabled]}
@@ -78,21 +174,18 @@ const ProfileInfo = () => {
         value={name}
         onChangeText={setName}
       />
-      <Text style={styles.label}>Email:</Text>
+      <Text style={styles.label}>FullName:</Text>
       <TextInput
         style={[styles.input, !isEditing && styles.disabled]}
         editable={isEditing}
-        value={email}
-        onChangeText={setEmail}
+        value={fullName}
+        onChangeText={setFullName}
       />
-      <Text style={styles.label}>Profile Image URL:</Text>
-      <TextInput
-        style={[styles.input, !isEditing && styles.disabled]}
-        editable={isEditing}
-        value={profileImage}
-        onChangeText={setProfileImage}
-      />
-      <TouchableOpacity style={styles.button} onPress={isEditing ? handleSave : handleEditToggle}>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={isEditing ? handleSave : handleEditToggle}
+      >
         <Text style={styles.buttonText}>{isEditing ? 'Save' : 'Edit Profile'}</Text>
       </TouchableOpacity>
     </View>
@@ -106,9 +199,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
+    
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 20,
+   
   },
   label: {
     fontWeight: '600',
@@ -159,7 +254,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
 });
 
 export default ProfileInfo;
