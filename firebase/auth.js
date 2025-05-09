@@ -6,6 +6,8 @@ import {
   updateCurrentUser,
   sendPasswordResetEmail,
   sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db ,usersRef} from "./config"
@@ -16,22 +18,40 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(undefined);
+  
 
   useEffect(() => {
     // onAuthStateChanged
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-          if (firebaseUser && firebaseUser.emailVerified) {
-      await AsyncStorage.setItem("user", JSON.stringify(firebaseUser));
-      setIsAuthenticated(true);
-      updateUserDate(firebaseUser.uid);
-    } else {
-      await AsyncStorage.removeItem("user");
-      setIsAuthenticated(false);
-    }
+      if (firebaseUser) {
+        const user = await AsyncStorage.getItem("user");
+        if (!user) {
+          const docRef = doc(db, "users", firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const userWithUsername = {
+              ...firebaseUser,
+              username: data.username,
+            };
+            await AsyncStorage.setItem("user", JSON.stringify(userWithUsername));
+          }
+        }
+      } else {
+        console.log("No user is signed in.");
+      }
     });
     return unsub;
   }, []);
+
+  setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+      console.log("Persistence set to local.");
+    })
+    .catch((error) => {
+      console.error("Error setting persistence:", error);
+    });
 
   const updateUserDate = async (userId) => {
     const docRef = doc(db, "users", userId);
@@ -128,7 +148,6 @@ const AuthContextProvider = ({ children }) => {
       const storedUser = await AsyncStorage.getItem("user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        setIsAuthenticated(true);
         return parsedUser;
       }
       return null;
@@ -142,7 +161,6 @@ const AuthContextProvider = ({ children }) => {
     <>
       <AuthContext.Provider
         value={{
-          isAuthenticated,
           login,
           register,
           logout,
