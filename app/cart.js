@@ -2,7 +2,7 @@ import React, { useState  , useLayoutEffect} from 'react';
 import {  useRouter } from "expo-router";
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getCartItems , deleteCart} from "@/firebase/apis/carts";
+import { getCartItems , deleteCart , increaseQuantity , decreaseQuantity} from "@/firebase/apis/carts";
 
 const Cart = () => {
   
@@ -45,11 +45,13 @@ const dummyCart = [
       setCartItems(items =>
         items.map(item => item.id === id ? { ...item, quantity: item.quantity + 1 } : item)
       );
+      //call firebase increase when user is added to asyncstorage
     };
   
     const decrease = (id) => {
       setCartItems(items =>
-        items.map(item => item.id === id && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item)
+        items.map(item => item.id === id && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item) 
+        //call firebase increase when user is added to asyncstorage
       );
     };
   
