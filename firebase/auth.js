@@ -62,8 +62,21 @@ const AuthContextProvider = ({ children }) => {
         await signOut(auth); // immediately sign out the user
         return { success: false, msg: "Please verify your email before logging in." };
       }
-      await AsyncStorage.setItem("user", JSON.stringify(response.user));
-      return { success: true , "data": response};
+      const docRef = doc(db, "users", response.user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        const userWithUsername = {
+          ...response.user,
+          username: userData.username,
+        };
+
+        await AsyncStorage.setItem("user", JSON.stringify(userWithUsername));
+        return { success: true, data: userWithUsername };
+      } else {
+        return { success: false, msg: "User data not found in Firestore." };
+      }
     } catch (error) {
       let msg = error?.message;
       if (msg.includes("(auth/invalid-email)")) msg = "Invalid Email";
@@ -120,11 +133,16 @@ const AuthContextProvider = ({ children }) => {
 
     const loadUserFromStorage = async () => {
     const storedUser = await AsyncStorage.getItem("user");
+    console.log("Stored User: ", storedUser);
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
       setIsAuthenticated(true);
     }
+        if (storedUser) {
+        return JSON.parse(storedUser); // Ensure this returns the parsed user
+    }
+    return null;
   };
 
   return (
