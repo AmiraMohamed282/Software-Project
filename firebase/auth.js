@@ -5,11 +5,13 @@ import {
   signOut,
   updateCurrentUser,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db ,usersRef} from "./config"
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // create context
 const AuthContext = createContext();
 
@@ -19,15 +21,16 @@ const AuthContextProvider = ({ children }) => {
 
   useEffect(() => {
     // onAuthStateChanged
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuthenticated(true);
-        setUser(user);
-        updateUserDate(user.uid);
-      } else {
-        setIsAuthenticated(false);
-        setUser(null);
-      }
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser && firebaseUser.emailVerified) {
+      await AsyncStorage.setItem("user", JSON.stringify(firebaseUser));
+      setIsAuthenticated(true);
+      updateUserDate(firebaseUser.uid);
+    } else {
+      await AsyncStorage.removeItem("user");
+      setIsAuthenticated(false);
+      setUser(null);
+    }
     });
     return unsub;
   }, []);
@@ -55,7 +58,12 @@ const AuthContextProvider = ({ children }) => {
     try {
       // login
       const response = await signInWithEmailAndPassword(auth, email, password);
-      return { success: true };
+      if (!response.user.emailVerified) {
+        await signOut(auth); // immediately sign out the user
+        return { success: false, msg: "Please verify your email before logging in." };
+      }
+      await AsyncStorage.setItem("user", JSON.stringify(response.user));
+      return { success: true , "data": response};
     } catch (error) {
       let msg = error?.message;
       if (msg.includes("(auth/invalid-email)")) msg = "Invalid Email";
@@ -68,6 +76,7 @@ const AuthContextProvider = ({ children }) => {
     try {
       // logout
       await signOut(auth);
+      await AsyncStorage.removeItem("user");
       return { success: true };
     } catch (error) {
       return { success: false, msg: error?.message, error };
@@ -87,6 +96,7 @@ const AuthContextProvider = ({ children }) => {
         email,
         password
       );
+      await sendEmailVerification(response?.user);
       console.log("responce.user : ", response?.user);
 
       await setDoc(doc(db, "users", response?.user?.uid), {
@@ -108,6 +118,14 @@ const AuthContextProvider = ({ children }) => {
     }
   };
 
+    const loadUserFromStorage = async () => {
+    const storedUser = await AsyncStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      setIsAuthenticated(true);
+    }
+  };
 
   return (
     <>
@@ -119,6 +137,7 @@ const AuthContextProvider = ({ children }) => {
           register,
           logout,
           changePassword,
+          loadUserFromStorage,
         }}
       >
         {children}

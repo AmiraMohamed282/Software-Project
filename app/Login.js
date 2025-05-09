@@ -21,7 +21,11 @@ import { router } from "expo-router";
 import { useAuth } from "../firebase/auth";
 import { Route } from "expo-router/build/Route";
 import { ActivityIndicator } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const setCurrentUser = (user)=>{
+  AsyncStorage.setItem ("user" , JSON.stringify(user))
+}
 
 
 export default function Login() {
@@ -30,11 +34,13 @@ export default function Login() {
   const { login } = useAuth();
   const [loding, setLoding] = useState(false);
   const [showRetypePassword, setShowRetypePassword] = useState(false);
-  
+  const [error , setError] = useState();
 
   const handleLogin = async () => {
+    setError("");
     if (!emailRef.current || !passwordRef.current) {
       Alert.alert("Sign In ", "Please fill all the fields");
+      setError("Please fill all the fields");
       return;
     }
     setLoding(true);
@@ -44,8 +50,12 @@ export default function Login() {
     console.log("sign in response ");
     if (!response.success) {
       Alert.alert("Sign In ", response.msg);
+      setError(response.msg || "Login failed. Please try again.");
+      console.log(response.msg);
     }else {
+    console.log(response.data.user)
     router.replace("/(tabs)/home"); // هنا بتوديك على صفحة الهوم
+    console.log(response);
   }
   };
   return (
@@ -113,6 +123,11 @@ export default function Login() {
               <Text style={styles.signupLink}> SIGN UP</Text>
             </Pressable>
           </View>
+         {error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null} 
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -199,4 +214,17 @@ const styles = StyleSheet.create({
     right: 15,
     top: 35,
   },
+  errorBox: {
+  backgroundColor: "#ffdddd",
+  borderRadius: 10,
+  padding: 10,
+  marginBottom: 15,
+  borderColor: "#ff5c5c",
+  borderWidth: 1,
+},
+errorText: {
+  color: "#cc0000",
+  fontSize: 13,
+  textAlign: "center",
+},
 });

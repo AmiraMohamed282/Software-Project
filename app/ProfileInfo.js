@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { auth, db } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProfileInfo = () => {
   const [isEditing, setIsEditing] = useState(false);

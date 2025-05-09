@@ -18,6 +18,7 @@ import { StatusBar } from "expo-status-bar";
 import { Feather, Octicons } from "@expo/vector-icons";
 import { TextInput } from "react-native";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useAuth } from "../firebase/auth";
 

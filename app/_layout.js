@@ -4,6 +4,7 @@ import { AuthContextProvider, useAuth } from "../firebase/auth";
 import React, { useEffect } from 'react'
 import { Slot, useRouter, useSegments } from 'expo-router';
 import 'react-native-gesture-handler';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 

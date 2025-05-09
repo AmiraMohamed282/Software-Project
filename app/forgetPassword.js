@@ -1,6 +1,8 @@
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import React, { useState } from "react";
 import { useAuth } from "../firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function forgetPassword() {
   const { changePassword } = useAuth();
