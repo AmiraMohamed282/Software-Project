@@ -1,52 +1,63 @@
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { React, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { Colors } from '../../constants/Colors';
-import { useAuth } from "../../firebase/auth";
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { db } from '../../firebase/config';
+import { getAuth } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+
 
 export default function Header() {
-    const [user, setUser] = useState(null);
-    const { loadUserFromStorage } = useAuth();
+    const [userName, setUserName] = useState('');
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        const fetchUser = async () => {
             try {
-                const userData = await loadUserFromStorage();
-                console.log("Fetched User Data:", userData); // Debugging log
-                if (userData) {
-                    setUser(userData);
+                const auth = getAuth();
+                const currentUser = auth.currentUser;
+
+                if (currentUser) {
+                    const userId = currentUser.uid;
+                    const userDocRef = doc(db, 'users', userId);
+                    const docSnap = await getDoc(userDocRef);
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        setUserName(data.username);
+                    } else {
+                        console.log('User document does not exist');
+                    }
                 } else {
-                    console.log("No user data found in AsyncStorage.");
+                    console.log('No user is signed in');
                 }
             } catch (error) {
-                console.error("Error fetching user data:", error);
+                console.error('Error getting user data:', error);
             }
         };
 
-        fetchUserData();
+        fetchUser();
     }, []);
 
     return (
         <View style={styles.container}>
             <View style={styles.headLeft}>
-                <Text
-                    style={{
-                        fontSize: 18,
-                        color: 'black',
-                    }}>
-                    Welcome
-                </Text>
-                <Text
-                    style={{
-                        fontSize: 25,
-                        color: 'black',
-                    }}>
-                    {user?.username || 'Guest'}
-                </Text>
+                <Text style={styles.welcomeText}>Welcome</Text>
+                <Text style={styles.userName}>{userName || 'User'}</Text>
             </View>
-            <Image
-                source={''}
-                style={styles.headimg}>
-            </Image>
+
+            <View style={styles.rightSection}>
+                <View style={styles.searchContainer}>
+                    <TextInput 
+                        placeholder="Search"
+                        placeholderTextColor="#999"
+                        style={styles.searchInput}
+                    />
+                </View>
+
+                <TouchableOpacity style={styles.cartIcon}>
+                    <Icon name="shopping-cart" size={20} color="#000" />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -56,29 +67,40 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        padding: 20,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 10,
-        backgroundColor: '#498264'
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        backgroundColor: '#1f3d2c',
+        borderBottomLeftRadius:15,
+        borderBottomRightRadius:15,
     },
     headLeft: {
-        elevation: 3,
+        flex: 1,
     },
-    headimg: {
-        width: 40,
-        height: 40,
-        borderRadius: 18,
-        backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    }
+    welcomeText: {
+        fontSize: 14,
+        color: '#eee',
+    },
+    userName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+    },
+    rightSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    searchContainer: {
+        width: 150,
+        marginRight: 15,
+    },
+    searchInput: {
+        backgroundColor: '#f2f2f2',
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        fontSize: 14,
+    },
+    cartIcon: {
+        padding: 5,
+    },
 });

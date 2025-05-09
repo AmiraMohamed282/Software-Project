@@ -9,6 +9,7 @@ export default function Home() {
   return (
     <View style={styles.container}>
       {/* slider */}
+        <Header />
         <Slider/>
         <Category />
     </View>
