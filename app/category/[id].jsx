@@ -4,6 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { addToCart } from '../../firebase/apis/carts';
+import { useAuth } from '../../firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { removeFromCart } from '../../firebase/apis/carts';
 
 const { width } = Dimensions.get('window');
 
@@ -18,7 +22,23 @@ export default function CategoryDetail() {
   const [descriptionLines, setDescriptionLines] = useState(3);
   const [numColumns, setNumColumns] = useState(width > 600 ? 2 : 1);
 
+  const { loadUserFromStorage } = useAuth();
+  const [user, setUser] = useState('');
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+            const userData = await loadUserFromStorage();
+            if (userData) {
+                setUser(userData);
+            } else {
+                console.log('No user data found in AsyncStorage');
+            }
+        } catch (error) {
+            console.error('Error fetching user data from AsyncStorage:', error);
+        }
+    };
+
+    fetchUser();
     const updateColumns = () => {
       const { width } = Dimensions.get('window');
       setNumColumns(width > 600 ? 2 : 1);
@@ -60,6 +80,7 @@ export default function CategoryDetail() {
       );
       const snapshot = await getDocs(q);
       const productsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log("Fetched products:", productsData); // Debug log
       setProducts(productsData);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -71,48 +92,93 @@ export default function CategoryDetail() {
     setDescriptionLines(showFullDescription ? 3 : 0);
   };
 
-  const renderProductItem = ({ item }) => (
-    <View style={styles.productContainer}>
-      <TouchableOpacity 
-        style={styles.productItem}
-        onPress={() => router.push(`/product/${item.id}`)}
-      >
-        <TouchableOpacity onPress={() => router.push(`/product/${item.id}`)}>
-        <View style={styles.productCard}>
-          <Image source={{ uri: item.image }} style={styles.productImage} />
-          
-          <View style={styles.productInfo}>
-            <Text style={styles.productName} numberOfLines={1} ellipsizeMode="tail">
-              {item.name}
-            </Text>
+  const handleAddToCart = async (product) => {
+    if (!product) {
+      console.error("Product is undefined in handleAddToCart");
+      return;
+    }
+  
+    try {
+      if (!user) {
+        console.log('User not logged in');
+        return;
+      }
+  
+      console.log('Adding product to cart:', product);
+      await addToCart(user.uid, product);
+      console.log('Product added to cart:', product.name);
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+    }
+  };
+
+  const handleRemoveFromCart = async (productId) => {
+    try {
+      if (!user) {
+        console.log('User not logged in');
+        return;
+      }
+
+      await removeFromCart(user.uid, productId);
+      console.log('Product removed from cart:', productId);
+    } catch (error) {
+      console.error('Error removing product from cart:', error);
+    }
+  };
+
+  const renderProductItem = ({ item }) => {
+    if (!item) {
+      console.error("Item is undefined in renderProductItem");
+      return null;
+    }
+  
+    return (
+      <View style={styles.productContainer}>
+        <TouchableOpacity 
+          style={styles.productItem}
+          onPress={() => router.push(`/product/${item.id}`)}
+        >
+          <View style={styles.productCard}>
+            <Image source={{ uri: item.image }} style={styles.productImage} />
             
-            <Text style={styles.productPrice}>
-              ${item.price?.toFixed(2) || '0.00'}
-            </Text>
-            
-            <View style={styles.actionsContainer}>
-              <TouchableOpacity style={styles.actionButton}>
-                <MaterialIcons name="add-shopping-cart" size={20} color="#4a90e2" />
-              </TouchableOpacity>
+            <View style={styles.productInfo}>
+              <Text style={styles.productName} numberOfLines={1} ellipsizeMode="tail">
+                {item.name}
+              </Text>
               
-              <TouchableOpacity style={styles.actionButton}>
-                <MaterialIcons name="remove-shopping-cart" size={20} color="#ff4444" />
-              </TouchableOpacity>
+              <Text style={styles.productPrice}>
+                ${item.price?.toFixed(2) || '0.00'}
+              </Text>
               
-              <TouchableOpacity style={styles.actionButton}>
-                <MaterialIcons 
-                  name={item.isFavorite ? "favorite" : "favorite-border"} 
-                  size={20} 
-                  color={item.isFavorite ? "#ff4444" : "#666"} 
-                />
-              </TouchableOpacity>
+              <View style={styles.actionsContainer}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => handleAddToCart(item)}
+                >
+                  <MaterialIcons name="add-shopping-cart" size={20} color="#4a90e2" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => handleRemoveFromCart(item.id)}
+                >
+                  <MaterialIcons name="remove-shopping-cart" size={20} color="#ff4444" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.actionButton}>
+                  <MaterialIcons 
+                    name={item.isFavorite ? "favorite" : "favorite-border"} 
+                    size={20} 
+                    color={item.isFavorite ? "#ff4444" : "#666"} 
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </View>
-  );
+      </View>
+    );
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" color="green" style={{ marginTop: 100 }} />;

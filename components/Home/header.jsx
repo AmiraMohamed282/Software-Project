@@ -2,36 +2,24 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-nativ
 import React, { useEffect, useState } from 'react';
 import { Colors } from '../../constants/Colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { db } from '../../firebase/config';
-import { getAuth } from 'firebase/auth';
+import { useAuth } from '../../firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 
 export default function Header() {
+    const { loadUserFromStorage } = useAuth();
     const [userName, setUserName] = useState('');
-
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const auth = getAuth();
-                const currentUser = auth.currentUser;
-
-                if (currentUser) {
-                    const userId = currentUser.uid;
-                    const userDocRef = doc(db, 'users', userId);
-                    const docSnap = await getDoc(userDocRef);
-
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        setUserName(data.username);
-                    } else {
-                        console.log('User document does not exist');
-                    }
+                const userData = await loadUserFromStorage();
+                if (userData) {
+                    setUserName(userData.username);
                 } else {
-                    console.log('No user is signed in');
+                    console.log('No user data found in AsyncStorage');
                 }
             } catch (error) {
-                console.error('Error getting user data:', error);
+                console.error('Error fetching user data from AsyncStorage:', error);
             }
         };
 
@@ -58,6 +46,7 @@ export default function Header() {
                     <Icon name="shopping-cart" size={20} color="#000" />
                 </TouchableOpacity>
             </View>
+             
         </View>
     );
 }

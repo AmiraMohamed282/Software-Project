@@ -21,6 +21,8 @@ export default function ProductDetail() {
   const router = useRouter();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { loadUserFromStorage } = useAuth();
+  const [user, setUser] = useState('');
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState("");
 
@@ -52,8 +54,32 @@ export default function ProductDetail() {
       }
     };
 
+    const fetchUser = async () => {
+      try {
+        const userData = await loadUserFromStorage();
+        setUser(userData);
+      } catch (error) {
+        console.error("Error loading user:", error);
+      }
+    };
+
     fetchProduct();
+    fetchUser();
   }, [id]);
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      console.log("User not logged in");
+      return;
+    }
+
+    try {
+      await addToCart(user.uid, { id, ...product });
+      console.log("Product added to cart:", product.name);
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+    }
+  };
 
   const handleAddReview = async () => {
     const text = newReview.trim();
@@ -147,8 +173,9 @@ export default function ProductDetail() {
         <Text style={styles.description}>
           {product.description || "No description available."}
         </Text>
-
-        <TouchableOpacity style={styles.addToCartButton}>
+        
+        {/* Add to Cart Button */}
+        <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
           <Text style={styles.addToCartText}>ADD TO CART</Text>
         </TouchableOpacity>
 

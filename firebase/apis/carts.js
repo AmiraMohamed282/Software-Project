@@ -33,52 +33,77 @@ import {
     await deleteDoc(cart);
   }
 
-  const addToCart = async (food, uid, counter) => {
-    let cart = await getCart(uid);
-    if (!cart) {
-      const ref = await createCart(uid);
-      cart = { id: ref.id };
+const addToCart = async (uid, product) => {
+  try {
+    const cartRef = await getCart(uid); // Get the user's cart
+    if (!cartRef) {
+      const newCartRef = await createCart(uid); // Create a new cart if it doesn't exist
+      cartRef = { id: newCartRef.id };
     }
-    const cartItemsColRef = collection(db, 'carts', cart.id, 'items');
-  
-    // Check if item is already in cart
-    const q = query(cartItemsColRef, where('foodId', '==', food.foodId), limit(1));
-    const existing = await getDocs(q);
-    if (!existing.empty) {
-      const docSnap = existing.docs[0];
-      const currentQty = docSnap.data().quantity || 0;
-      await updateDoc(doc(db, 'carts', cart.id, 'items', docSnap.id), {
-        quantity: currentQty + counter,
+
+    const cartItemsRef = collection(db, 'carts', cartRef.id, 'items');
+    const q = query(cartItemsRef, where('id', '==', product.id), limit(1));
+    const existingItem = await getDocs(q);
+
+    if (!existingItem.empty) {
+      const itemDoc = existingItem.docs[0];
+      const currentQuantity = itemDoc.data().quantity || 0;
+      await updateDoc(doc(db, 'carts', cartRef.id, 'items', itemDoc.id), {
+        quantity: currentQuantity + 1,
       });
-      return docSnap.id;
+    } else {
+      await addDoc(cartItemsRef, {
+        ...product,
+        quantity: 1,
+      });
     }
-  
-    const item = {
-      ...food,
-      quantity: counter,
-    };
-    const itemRef = await addDoc(cartItemsColRef, item);
-    console.log('added to cart! this id = ', itemRef.id);
-    return itemRef.id;
-  };
-  
+
+    console.log('Product added to cart successfully');
+  } catch (error) {
+    console.error('Error adding product to cart:', error);
+  }
+};
+
   const inCart = async (uid, foodId) => {
     const cartItemsColRef = collection(db , 'carts' , uid , 'items');
     const q = query(cartItemsColRef , where('foodId' , '==' , foodId) , limit(1));
     const promise = await getDocs(q);
     return promise;
   };
-  const removeFromCart = async (uid , itemId ) => {
-    let cart = await getCart(uid);
-    if (!cart) {
-      console.log('cart not found');
-      return false;
+
+const removeFromCart = async (uid, productId) => {
+  try {
+    const cart = await getCart(uid);
+    if (!cart) throw new Error('Cart not found');
+
+    const cartItemsRef = collection(db, 'carts', cart.id, 'items');
+    const q = query(cartItemsRef, where('id', '==', productId));
+    const snapshot = await getDocs(q);
+    console.log('snapshot', snapshot);
+    if (!snapshot.empty) {
+      const itemDoc = snapshot.docs[0];
+      await deleteDoc(doc(db, 'carts', cart.id, 'items', itemDoc.id));
+      console.log('Product removed from cart:', productId);
+    } else {
+      console.log('Product not found in cart:', productId);
     }
-    const cartItem = doc(db , 'carts', cart.id , 'items' , itemId);
-    await deleteDoc(cartItem);  
-    console.log('cart item deleted!');
+  } catch (error) {
+    console.error('Error removing product from cart:', error);
   }
-  
+};
+
+const removeItemById = async (uid, itemId) => {
+  try {
+    const cart = await getCart(uid);
+    if (!cart) throw new Error('Cart not found');
+
+    const itemRef = doc(db, 'carts', cart.id, 'items', itemId);
+    await deleteDoc(itemRef);
+    console.log('Item removed from cart by ID:', itemId);
+  } catch (error) {
+    console.error('Error removing item by ID:', error);
+  }
+};
   const getCartItems = async (uid) => {
     let cart = await getCart(uid);
     if (!cart) {
@@ -131,9 +156,9 @@ export {
   deleteCart,
   addToCart,
   removeFromCart,
+  removeItemById,
   getCartItems,
   inCart,
   increaseQuantity,
   decreaseQuantity,
 };
-  
