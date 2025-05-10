@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { db } from '../firebase/config';
+import { db, auth } from '../firebase/config'; // Import auth from Firebase config
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from "../firebase/auth";
 
 const ProfileInfo = () => {
+  const [user, setUser] = useState(null); // Added useState for user
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -33,6 +34,7 @@ const ProfileInfo = () => {
     try {
       const userData = await loadUserFromStorage();
       if (userData) {
+        setUser(userData); // Set user state
         setName(userData.username);
         setEmail(userData.email);
         setProfileImage(userData.image);
@@ -43,6 +45,7 @@ const ProfileInfo = () => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
+          setUser(userData); // Set user state
           setName(userData.username);
           setEmail(userData.email);
           setProfileImage(userData.image);
@@ -70,18 +73,35 @@ const ProfileInfo = () => {
 
   const handleSave = async () => {
     try {
+      let imageUrl = profileImage;
+      // Guard: Check if the user has uploaded an image
+    if (!imageUrl) {
+      if (user.image) {
+        setProfileImage(user.image); // Use existing image if available
+        imageUrl = user.image; // Use existing image if available
+        console.log('⚠️ No new image uploaded, using existing image:', profileImage);
+      } else {
+        const tempLink = "https://i.ibb.co/zVNw1y1p/istockphoto-857103580-612x612.jpg";
+        imageUrl = tempLink;
+        setProfileImage(tempLink);
+      }
+    }
+
       if (user) {
         const userRef = doc(db, 'users', user.uid);
         const updatedData = {
           username: name,
           email: email,
-          image: profileImage,
+          image: imageUrl,
           fullName: fullName,
         };
         await updateDoc(userRef, updatedData);
         console.log('✅ Saved data:', updatedData);
 
-        await AsyncStorage.setItem('user', JSON.stringify(updatedData));
+        // Update AsyncStorage
+        const updatedUser = { ...user, ...updatedData };
+        setUser(updatedUser); // Update user state
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
         Alert.alert('Success', 'Profile updated successfully!');
       }
     } catch (error) {
@@ -145,12 +165,9 @@ const ProfileInfo = () => {
             });
 
             // Update AsyncStorage
-            const userData = await AsyncStorage.getItem('user');
-            if (userData) {
-              const userData = JSON.parse(userData);
-              userData.image = imageUrl;
-              await AsyncStorage.setItem('user', JSON.stringify(userData));
-            }
+            const updatedUser = { ...user, image: imageUrl };
+            setUser(updatedUser); // Update user state
+            await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
 
             console.log('✅ Image URL updated in Firestore and AsyncStorage');
             Alert.alert('Success', 'Profile image updated successfully!');
@@ -239,11 +256,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 20,
-   
   },
   label: {
     fontWeight: '600',

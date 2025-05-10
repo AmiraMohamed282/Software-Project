@@ -4,6 +4,7 @@ import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCartItems, removeItemById, increaseQuantity, decreaseQuantity, removeFromCart } from "../firebase/apis/carts";
 import { useAuth } from '../firebase/auth';
+import { Ionicons } from '@expo/vector-icons';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -57,14 +58,23 @@ const Cart = () => {
   const decrease = async (itemId) => {
     try {
       if (user?.uid) {
-        await decreaseQuantity(user.uid, itemId);
-        setCartItems((prevItems) =>
-          prevItems.map((item) =>
-            item.itemId === itemId
-              ? { ...item, quantity: Math.max(item.quantity - 1, 1) }
-              : item
-          )
-        );
+        const item = cartItems.find((item) => item.itemId === itemId);
+        if (item.quantity <= 1) {
+          await removeItemById(user.uid, itemId);
+          setCartItems((prevItems) =>
+            prevItems.filter((item) => item.itemId !== itemId)
+          );
+          console.log(`Item with ID ${itemId} removed from cart.`);
+        } else {
+          await decreaseQuantity(user.uid, itemId);
+          setCartItems((prevItems) =>
+            prevItems.map((item) =>
+              item.itemId === itemId
+                ? { ...item, quantity: item.quantity - 1 }
+                : item
+            )
+          );
+        }
       }
     } catch (error) {
       console.error("Error decreasing quantity:", error);
@@ -109,9 +119,11 @@ const Cart = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>{'\u25C0'}</Text>
-        </TouchableOpacity>
+        <View style={styles.backButtonContainer}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.heading}>{`${user?.username || 'Guest'}'s Cart`}</Text>
       </View>
 
@@ -189,6 +201,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     position: 'relative',
     height: 40,
+  },
+  backButtonContainer: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 1, // Ensure the button is above other elements
   },
   heading: {
     fontSize: 20,
