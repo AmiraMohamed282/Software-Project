@@ -54,8 +54,12 @@ export default function Login() {
       console.log(response.msg);
     }else {
     console.log(response.data.user)
+    if (response.data.email ===  "admin@email.com") {
+      router.replace("/admin");
+    }else {
     router.replace("/(tabs)/home");
-    console.log(response);
+    
+  }console.log(response);
   }
   };
   return (
