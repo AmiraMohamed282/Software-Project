@@ -8,6 +8,7 @@ import { addToCart } from '../../firebase/apis/carts';
 import { useAuth } from '../../firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { removeFromCart } from '../../firebase/apis/carts';
+import { addToFavorites, removeFromFavorites, getFavorites } from '../../firebase/apis/favorites';
 
 const { width } = Dimensions.get('window');
 
@@ -21,6 +22,7 @@ export default function CategoryDetail() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [descriptionLines, setDescriptionLines] = useState(3);
   const [numColumns, setNumColumns] = useState(width > 600 ? 2 : 1);
+  const [favorites, setFavorites] = useState([]);
 
   const { loadUserFromStorage } = useAuth();
   const [user, setUser] = useState('');
@@ -30,6 +32,8 @@ export default function CategoryDetail() {
             const userData = await loadUserFromStorage();
             if (userData) {
                 setUser(userData);
+                const userFavorites = await getFavorites(userData.uid);
+                setFavorites(userFavorites);
             } else {
                 console.log('No user data found in AsyncStorage');
             }
@@ -126,12 +130,33 @@ export default function CategoryDetail() {
     }
   };
 
+  const handleToggleFavorite = async (productId) => {
+    if (!user) {
+      console.log('User not logged in');
+      return;
+    }
+
+    try {
+      if (favorites.includes(productId)) {
+        await removeFromFavorites(user.uid, productId);
+        setFavorites((prev) => prev.filter((id) => id !== productId));
+      } else {
+        await addToFavorites(user.uid, productId);
+        setFavorites((prev) => [...prev, productId]);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
   const renderProductItem = ({ item }) => {
     if (!item) {
       console.error("Item is undefined in renderProductItem");
       return null;
     }
-  
+
+    const isFavorite = favorites.includes(item.id);
+
     return (
       <View style={styles.productContainer}>
         <TouchableOpacity 
@@ -165,11 +190,14 @@ export default function CategoryDetail() {
                   <MaterialIcons name="remove-shopping-cart" size={20} color="#ff4444" />
                 </TouchableOpacity>
                 
-                <TouchableOpacity style={styles.actionButton}>
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => handleToggleFavorite(item.id)}
+                >
                   <MaterialIcons 
-                    name={item.isFavorite ? "favorite" : "favorite-border"} 
+                    name={isFavorite ? "favorite" : "favorite-border"} 
                     size={20} 
-                    color={item.isFavorite ? "#ff4444" : "#666"} 
+                    color={isFavorite ? "#ff4444" : "#666"} 
                   />
                 </TouchableOpacity>
               </View>
