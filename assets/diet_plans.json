@@ -1,0 +1,224 @@
+{
+  "diets": [
+    {
+      "name": "Keto Diet",
+      "category": "Low-Carb / High-Fat",
+      "description": "High-fat, low-carb diet that forces the body into ketosis to burn fat for energy.",
+      "suitable_for": [
+        "People who want quick weight loss",
+        "Type 2 diabetics (with medical supervision)",
+        "Those looking for stable energy levels"
+      ],
+      "not_recommended_for": [
+        "People with liver or kidney conditions",
+        "Pregnant women (without doctor advice)"
+      ],
+      "meals": {
+        "breakfast": {
+          "name": "Keto Omelette",
+          "ingredients": [
+            "Eggs",
+            "Cheese",
+            "Spinach",
+            "Butter",
+            "Avocado"
+          ]
+        },
+        "lunch": {
+          "name": "Grilled Chicken Salad",
+          "ingredients": [
+            "Grilled chicken",
+            "Lettuce",
+            "Cucumber",
+            "Feta cheese",
+            "Olive oil"
+          ]
+        },
+        "dinner": {
+          "name": "Salmon with Asparagus",
+          "ingredients": [
+            "Salmon",
+            "Asparagus",
+            "Olive oil",
+            "Garlic"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Mediterranean Diet",
+      "category": "Balanced / Heart-Healthy",
+      "description": "Balanced diet rich in vegetables, fruits, olive oil, and lean protein, inspired by Greek/Italian food.",
+      "suitable_for": [
+        "People with heart disease risk",
+        "Anyone seeking a long-term healthy lifestyle",
+        "Those aiming to prevent inflammation or diabetes"
+      ],
+      "not_recommended_for": [
+        "People on low-fat restriction diets"
+      ],
+      "meals": {
+        "breakfast": {
+          "name": "Greek Yogurt with Fruits",
+          "ingredients": [
+            "Greek yogurt",
+            "Berries",
+            "Chia seeds",
+            "Honey"
+          ]
+        },
+        "lunch": {
+          "name": "Quinoa Salad with Tuna",
+          "ingredients": [
+            "Quinoa",
+            "Tuna",
+            "Tomatoes",
+            "Cucumber",
+            "Olive oil",
+            "Lemon"
+          ]
+        },
+        "dinner": {
+          "name": "Grilled Chicken with Veggies",
+          "ingredients": [
+            "Chicken breast",
+            "Zucchini",
+            "Bell peppers",
+            "Olive oil"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Vegan Diet",
+      "category": "Plant-Based",
+      "description": "Plant-based diet with no animal products. Focuses on vegetables, fruits, legumes, nuts, and grains.",
+      "suitable_for": [
+        "People avoiding animal products",
+        "Those with lactose intolerance",
+        "People lowering cholesterol naturally"
+      ],
+      "not_recommended_for": [
+        "People with B12, iron or protein deficiencies (unless supplemented)",
+        "Children or pregnant women (without medical advice)"
+      ],
+      "meals": {
+        "breakfast": {
+          "name": "Vegan Smoothie Bowl",
+          "ingredients": [
+            "Banana",
+            "Almond milk",
+            "Oats",
+            "Chia seeds",
+            "Berries"
+          ]
+        },
+        "lunch": {
+          "name": "Chickpea Curry with Rice",
+          "ingredients": [
+            "Chickpeas",
+            "Coconut milk",
+            "Tomato",
+            "Onion",
+            "Basmati rice"
+          ]
+        },
+        "dinner": {
+          "name": "Grilled Tofu with Vegetables",
+          "ingredients": [
+            "Tofu",
+            "Broccoli",
+            "Carrots",
+            "Soy sauce",
+            "Olive oil"
+          ]
+        }
+      }
+    },
+    {
+      "name": "High Protein Diet",
+      "category": "High-Protein / Fitness-Oriented",
+      "description": "Protein-rich diet focused on muscle growth and satiety, often used for fitness and weight loss.",
+      "suitable_for": [
+        "Athletes or gym-goers",
+        "People looking to lose weight without hunger",
+        "Muscle building"
+      ],
+      "not_recommended_for": [
+        "People with kidney disease",
+        "Low fiber intake individuals"
+      ],
+      "meals": {
+        "breakfast": {
+          "name": "Protein Pancakes",
+          "ingredients": [
+            "Oats",
+            "Eggs",
+            "Protein powder",
+            "Banana"
+          ]
+        },
+        "lunch": {
+          "name": "Grilled Beef with Quinoa",
+          "ingredients": [
+            "Beef steak",
+            "Quinoa",
+            "Green beans"
+          ]
+        },
+        "dinner": {
+          "name": "Chicken Stir-Fry",
+          "ingredients": [
+            "Chicken breast",
+            "Bell peppers",
+            "Onion",
+            "Soy sauce",
+            "Brown rice"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Low Carb Diet",
+      "category": "Low-Carb",
+      "description": "Limits carbohydrate intake while increasing protein and fats, often used for fat loss and blood sugar control.",
+      "suitable_for": [
+        "People with insulin resistance or diabetes",
+        "Those looking to reduce body fat",
+        "People who crave sweets frequently"
+      ],
+      "not_recommended_for": [
+        "High-performance athletes",
+        "People with thyroid issues (unless supervised)"
+      ],
+      "meals": {
+        "breakfast": {
+          "name": "Scrambled Eggs with Avocado",
+          "ingredients": [
+            "Eggs",
+            "Butter",
+            "Avocado",
+            "Spinach"
+          ]
+        },
+        "lunch": {
+          "name": "Zucchini Noodles with Meatballs",
+          "ingredients": [
+            "Zucchini",
+            "Beef or turkey meatballs",
+            "Tomato sauce"
+          ]
+        },
+        "dinner": {
+          "name": "Grilled Fish with Cauliflower Rice",
+          "ingredients": [
+            "White fish",
+            "Cauliflower",
+            "Lemon",
+            "Garlic"
+          ]
+        }
+      }
+    }
+  ]
+}

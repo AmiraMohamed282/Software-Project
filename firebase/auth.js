@@ -1,42 +1,53 @@
 import {
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  updateCurrentUser,
-  sendPasswordResetEmail,
-  sendEmailVerification,
-  setPersistence,
-  browserLocalPersistence,
-} from "firebase/auth";
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    updateCurrentUser,
+    sendPasswordResetEmail,
+} from "@firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db ,usersRef} from "./config"
+import { auth, db } from "../firebase/config";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 // create context
 const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-  
+    const [user, setUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(undefined);
 
-  useEffect(() => {
-    // onAuthStateChanged
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const user = await AsyncStorage.getItem("user");
-        if (!user) {
-          const docRef = doc(db, "users", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
+    useEffect(() => {
+        // onAuthStateChanged
+        const unsub = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setIsAuthenticated(true);
+                setUser(user);
+                updateUserDate(user.uid);
+            } else {
+                setIsAuthenticated(false);
+                setUser(null);
+            }
+        });
+        return unsub;
+    }, []);
 
-          if (docSnap.exists()) {
+    const updateUserDate = async (userId) => {
+        const docRef = doc(db, "users", userId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
             const data = docSnap.data();
-            const userWithUsername = {
-              ...firebaseUser,
-              username: data.username,
-            };
-            await AsyncStorage.setItem("user", JSON.stringify(userWithUsername));
-          }
+            setUser({
+                ...user,
+                username: data.username,
+                profileUrl: data.profileUrl,
+                userId: data.userId,
+                email:data.email,
+                password:data.password
+            });
+        } else {
+            console.log("No such document!");
         }
       } else {
         console.log("No user is signed in.");
@@ -158,33 +169,27 @@ const AuthContextProvider = ({ children }) => {
       console.error("Error loading user from storage:", error);
       return null;
     }
-  };
+};
 
-  return (
-    <>
-      <AuthContext.Provider
-        value={{
-          login,
-          register,
-          logout,
-          changePassword,
-          loadUserFromStorage,
-        }}
-      >
-        {children}
-      </AuthContext.Provider>
-    </>
-  );
+    return (
+        <>
+            <AuthContext.Provider
+                value={{ user, isAuthenticated, login, register, logout, changePassword }}
+            >
+                {children}
+            </AuthContext.Provider>
+        </>
+    );
 };
 
 const useAuth = () => {
-  const value = useContext(AuthContext);
+    const value = useContext(AuthContext);
 
-  if (!value) {
-    throw new Error("useAuth must be wrapped inside AuthContextProvider");
-  }
+    if (!value) {
+        throw new Error("useAuth must be wrapped inside AuthContextProvider");
+    }
 
-  return value;
+    return value;
 };
 
 export { AuthContext, AuthContextProvider, useAuth };
