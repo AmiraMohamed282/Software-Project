@@ -21,7 +21,7 @@ export default function Favorite() {
         const userData = await loadUserFromStorage();
         if (!userData) {
           console.log('No user data found in AsyncStorage');
-          router.push('/login');
+          router.push('/Login');
           return;
         }
 
