@@ -14,7 +14,8 @@ import React, { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { doc, getDoc, collection, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { getAuth } from "firebase/auth";
+import { useAuth } from "../../firebase/auth";
+import { addToCart } from "../../firebase/apis/carts";
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams();
@@ -89,9 +90,6 @@ export default function ProductDetail() {
     }
 
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
       const review = {
         text,
         user: user ? user.email : "Anonymous",

@@ -4,13 +4,11 @@ import { Ionicons, MaterialIcons, FontAwesome5, Entypo } from '@expo/vector-icon
 import { useAuth } from '../../firebase/auth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { auth, db } from '../../firebase/config';
 import { doc, getDoc } from "firebase/firestore";
 
 const ProfileScreen = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userr, setUserr] = useState(null);
   const {loadUserFromStorage , logout} = useAuth(); 
   const [loading, setLoading] = useState(false);
   const handleLogout = async () => {
@@ -24,31 +22,15 @@ const ProfileScreen = () => {
       setLoading(false);
     }
   };
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     const userData = await loadUserFromStorage();
-  //     if (userData) {
-  //       setUser(userData);
-  //     } else {
-  //       console.log("No user data found in AsyncStorage.");
-  //       router.replace("/Login"); // Redirect to login if no user data
-  //     }
-  //   };
-
-  //   fetchUserData();
-  // }, []);
-     useEffect(() => {
+  useEffect(() => {
     const fetchUserData = async () => {
-      if (auth.currentUser) {
-        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-        if (userDoc.exists()) {
-          setUserr(userDoc.data());
-          console.log(userr)
+      const userData = await loadUserFromStorage();
+      if (userData) {
+        setUser(userData);
         } else {
           console.log("⚠️ No user data found!");
            router.replace("/Login"); 
         }
-      }
     };
 
     fetchUserData();
@@ -57,13 +39,13 @@ const ProfileScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
-      {userr ? (<>
+      {user ? (<>
           <Image
-            source={{ uri: userr.image || 'https://randomuser.me/api/portraits/men/15.jpg' }}
+            source={{ uri: user.image || 'https://randomuser.me/api/portraits/men/15.jpg' }}
             //todo add upload image
             style={styles.avatar}
           />
-          <Text style={styles.name}> {userr.username} </Text>
+          <Text style={styles.name}> {user.username} </Text>
         </>
       ) : (
         <Text>Loading...</Text>

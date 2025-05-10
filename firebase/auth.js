@@ -77,13 +77,15 @@ const AuthContextProvider = ({ children }) => {
 
       if (docSnap.exists()) {
         const userData = docSnap.data();
-        const userWithUsername = {
+        const userWithFullData = {
           ...response.user,
           username: userData.username,
+          image: userData.image,
+          fullName: userData.fullName,
         };
 
-        await AsyncStorage.setItem("user", JSON.stringify(userWithUsername));
-        return { success: true, data: userWithUsername };
+        await AsyncStorage.setItem("user", JSON.stringify(userWithFullData));
+        return { success: true, data: userWithFullData };
       } else {
         return { success: false, msg: "User data not found in Firestore." };
       }

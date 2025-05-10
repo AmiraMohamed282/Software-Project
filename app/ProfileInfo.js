@@ -10,37 +10,57 @@ import {
   Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { auth, db } from '../firebase/config';
+import { db } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from "../firebase/auth";
+
 const ProfileInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const[fullName , setFullName]= useState('');
+  const [fullName, setFullName] = useState('');
   const [profileImage, setProfileImage] = useState('');
   const [loading, setLoading] = useState(true);
+  const { loadUserFromStorage } = useAuth();
 
   const router = useRouter();
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (auth.currentUser) {
+
+  // Fetch user data from Firestore or AsyncStorage
+  const fetchUserData = async () => {
+    try {
+      const userData = await loadUserFromStorage();
+      if (userData) {
+        setName(userData.username);
+        setEmail(userData.email);
+        setProfileImage(userData.image);
+        setFullName(userData.fullName);
+        console.log('Loaded user data from AsyncStorage:', userData);
+      } else if (auth.currentUser) {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          setName(userData.username );
+          setName(userData.username);
           setEmail(userData.email);
           setProfileImage(userData.image);
-          setFullName(userData.fullName)
-          console.log('User data:', userData.email);
+          setFullName(userData.fullName);
+          console.log('Loaded user data from Firestore:', userData);
+          await AsyncStorage.setItem('user', JSON.stringify(userData));
         } else {
-          console.log('⚠️ No user data found!');
+          console.log('⚠️ No user data found in Firestore!');
         }
       }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchUserData();
   }, []);
 
@@ -49,17 +69,27 @@ const ProfileInfo = () => {
   };
 
   const handleSave = async () => {
-    if (auth.currentUser) {
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userRef, {
-        username: name,
-        email: email,
-        image: profileImage,
-        fullName: fullName,
-      });
-      console.log('✅ Saved data:', { name, email, profileImage , fullName });
+    try {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        const updatedData = {
+          username: name,
+          email: email,
+          image: profileImage,
+          fullName: fullName,
+        };
+        await updateDoc(userRef, updatedData);
+        console.log('✅ Saved data:', updatedData);
+
+        await AsyncStorage.setItem('user', JSON.stringify(updatedData));
+        Alert.alert('Success', 'Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving profile data:', error);
+      Alert.alert('Error', 'Failed to save profile data.');
+    } finally {
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   const pickImage = () => {
@@ -108,12 +138,21 @@ const ProfileInfo = () => {
           const imageUrl = data.secure_url;
           setProfileImage(imageUrl);
 
-          if (auth.currentUser) {
-            const userRef = doc(db, 'users', auth.currentUser.uid);
+          if (user) {
+            const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
               image: imageUrl,
             });
-            console.log('✅ Image URL updated in Firestore');
+
+            // Update AsyncStorage
+            const userData = await AsyncStorage.getItem('user');
+            if (userData) {
+              const userData = JSON.parse(userData);
+              userData.image = imageUrl;
+              await AsyncStorage.setItem('user', JSON.stringify(userData));
+            }
+
+            console.log('✅ Image URL updated in Firestore and AsyncStorage');
             Alert.alert('Success', 'Profile image updated successfully!');
           }
         } else {
@@ -143,6 +182,7 @@ const ProfileInfo = () => {
     });
     uploadImage(result);
   };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -154,8 +194,8 @@ const ProfileInfo = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => router.replace('/profile')}>
-            <MaterialIcons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
+        <MaterialIcons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
       <Text style={styles.header}>Profile Info</Text>
       <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
         {profileImage ? (
@@ -174,7 +214,7 @@ const ProfileInfo = () => {
         value={name}
         onChangeText={setName}
       />
-      <Text style={styles.label}>FullName:</Text>
+      <Text style={styles.label}>Full Name:</Text>
       <TextInput
         style={[styles.input, !isEditing && styles.disabled]}
         editable={isEditing}
