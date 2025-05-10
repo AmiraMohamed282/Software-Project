@@ -2,38 +2,63 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, ActivityIndi
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db, auth } from '../../firebase/config';
+import { db } from '../../firebase/config';
 import { Ionicons } from '@expo/vector-icons';
+import { addToCart } from '../../firebase/apis/carts';
+import { getFavorites, removeFromFavorites } from '../../firebase/apis/favorites';
+import { useAuth } from '../../firebase/auth';
 
 export default function Favorite() {
   const router = useRouter();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const { loadUserFromStorage } = useAuth();
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const user = auth.currentUser;
-        if (!user) {
+        const userData = await loadUserFromStorage();
+        if (!userData) {
+          console.log('No user data found in AsyncStorage');
           router.push('/login');
           return;
         }
 
-        const q = query(
-          collection(db, "Product"),
-          where("favoritedBy", "array-contains", user.uid)
-        );
+        setUser(userData);
 
-        const querySnapshot = await getDocs(q);
-        const favoritesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        // Fetch favorite product IDs using the provided API function
+        const userFavorites = await getFavorites(userData.uid);
+        console.log('Favorite product IDs:', userFavorites);
 
-        setFavorites(favoritesData);
+        if (userFavorites.length === 0) {
+          setFavorites([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch product details for the favorite product IDs
+        const chunkSize = 10; // Firestore 'in' query limit is 10
+        const productChunks = [];
+        for (let i = 0; i < userFavorites.length; i += chunkSize) {
+          productChunks.push(userFavorites.slice(i, i + chunkSize));
+        }
+
+        const allProducts = [];
+        for (const chunk of productChunks) {
+          const q = query(collection(db, 'Product'), where('__name__', 'in', chunk));
+          const querySnapshot = await getDocs(q);
+          const products = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          allProducts.push(...products);
+        }
+
+        console.log('Fetched favorite products:', allProducts);
+        setFavorites(allProducts);
       } catch (error) {
-        console.error("Error fetching favorites:", error);
+        console.error('Error fetching favorites:', error);
       } finally {
         setLoading(false);
       }
@@ -42,39 +67,76 @@ export default function Favorite() {
     fetchFavorites();
   }, []);
 
+  const handleAddToCart = async (product) => {
+    if (!product) {
+      console.error('Product is undefined in handleAddToCart');
+      return;
+    }
+
+    try {
+      if (!user) {
+        console.log('User not logged in');
+        router.push('/login');
+        return;
+      }
+
+      console.log('Adding product to cart:', product);
+      await addToCart(user.uid, product);
+      console.log('Product added to cart:', product.name);
+      alert('Product added to cart successfully!');
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+      alert('Failed to add product to cart. Please try again.');
+    }
+  };
+
+  const handleRemoveFromFavorites = async (productId) => {
+    try {
+      if (!user) return;
+
+      console.log('Removing product from favorites:', productId);
+
+      // Update the UI first for immediate feedback
+      setFavorites((prevFavorites) => prevFavorites.filter((item) => item.id !== productId));
+
+      // Then perform the Firebase operation using the provided API function
+      await removeFromFavorites(user.uid, productId);
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      alert('Failed to remove from favorites. Please try again.');
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.productCard}
       onPress={() => router.push(`/product/${item.id}`)}
     >
-      <Image source={{ uri: item.image }} style={styles.productImage} />
+      <Image
+        source={{ uri: item.image }}
+        style={styles.productImage}
+        defaultSource={require('../../assets/placeholder.png')} // Add a default placeholder image
+      />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productPrice}>${item.price?.toFixed(2) || '0.00'}</Text>
         <View style={styles.actions}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.favoriteButton}
-            onPress={() => removeFromFavorites(item.id)}
+            onPress={() => handleRemoveFromFavorites(item.id)}
           >
             <Ionicons name="heart" size={24} color="#ff4444" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.addToCartButton}>
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={() => handleAddToCart(item)}
+          >
             <Ionicons name="cart" size={20} color="#4a90e2" />
           </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>
   );
-
-  const removeFromFavorites = async (productId) => {
-    try {
-      // هنا ستقوم بتنفيذ دالة لإزالة المنتج من المفضلة في Firebase
-      console.log("Removing product from favorites:", productId);
-      setFavorites(favorites.filter(item => item.id !== productId));
-    } catch (error) {
-      console.error("Error removing from favorites:", error);
-    }
-  };
 
   if (loading) {
     return (
@@ -87,12 +149,12 @@ export default function Favorite() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Favorites</Text>
-      
+
       {favorites.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="heart-dislike" size={50} color="#ccc" />
           <Text style={styles.emptyText}>No favorite items yet</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.browseButton}
             onPress={() => router.push('/home')}
           >
@@ -103,8 +165,9 @@ export default function Favorite() {
         <FlatList
           data={favorites}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -144,6 +207,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 10,
+    backgroundColor: '#f0f0f0', // Placeholder color before image loads
   },
   productInfo: {
     flex: 1,
