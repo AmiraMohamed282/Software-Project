@@ -1,27 +1,28 @@
 import { MenuProvider } from "react-native-popup-menu";
 import { AuthContextProvider, useAuth } from "../firebase/auth";
 import React, { useEffect } from 'react';
-import { Slot, useRouter } from 'expo-router';
+import { Slot, useRouter , usePathname } from 'expo-router';
 import 'react-native-gesture-handler';
 
 const MainLayout = () => {
   const router = useRouter();
   const { loadUserFromStorage } = useAuth();
-
+  const pathname = usePathname();
   useEffect(() => {
     const initializeUser = async () => {
       try {
         const user = await loadUserFromStorage();
+        console.log("pathname", pathname);
         if (!user) {
           router.replace("/Login");
         } else {
           // Check if the user is an admin
           if (user.email === "admin@email.com") {
-            if (router.pathname === "/") {
+            if (pathname == "/") {
               router.replace("/admin");
             }
           } else {
-            if (router.pathname === "/") {
+            if (pathname === "/") {
               router.replace("/(tabs)/home");
             }
           }

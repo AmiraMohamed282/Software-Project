@@ -89,6 +89,8 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 20,
+    maxHeight: 250,
+    alignItems: 'center',
   },
   cardContainer: {
     width: width - 30,

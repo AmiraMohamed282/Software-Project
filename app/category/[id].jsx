@@ -59,6 +59,17 @@ export default function CategoryDetail() {
     }
   }, [id]);
 
+  useEffect(() => {
+    const updateColumns = () => {
+      const { width } = Dimensions.get('window');
+      setNumColumns(width > 600 ? 2 : 1);
+    };
+
+    updateColumns(); // Ensure columns are set on initial render
+    Dimensions.addEventListener('change', updateColumns);
+    return () => Dimensions.removeEventListener('change', updateColumns);
+  }, []);
+
   const getCategoryById = async (id) => {
     try {
       const docRef = doc(db, 'Category', id);
