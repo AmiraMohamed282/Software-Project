@@ -69,7 +69,7 @@ const ProfileScreen = () => {
           <Ionicons name="cart" size={24} style={styles.icon} />
           <Text style={styles.label}>Cart</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={() => { router.push('/(tabs)/favorite'); }}>
+        <TouchableOpacity style={styles.item} onPress={() => { router.push('/favorite'); }}>
           <Ionicons name="heart-outline" size={24} style={styles.icon} />
           <Text style={styles.label}>Favourite</Text>
         </TouchableOpacity>
