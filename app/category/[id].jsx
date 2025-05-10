@@ -48,8 +48,8 @@ export default function CategoryDetail() {
       setNumColumns(width > 600 ? 2 : 1);
     };
 
-    Dimensions.addEventListener('change', updateColumns);
-    return () => Dimensions.removeEventListener('change', updateColumns);
+    // Dimensions.addEventListener('change', updateColumns);
+    // return () => Dimensions.removeEventListener('change', updateColumns);
   }, []);
 
   useEffect(() => {
@@ -66,8 +66,8 @@ export default function CategoryDetail() {
     };
 
     updateColumns(); // Ensure columns are set on initial render
-    Dimensions.addEventListener('change', updateColumns);
-    return () => Dimensions.removeEventListener('change', updateColumns);
+    // Dimensions.addEventListener('change', updateColumns);
+    // return () => Dimensions.removeEventListener('change', updateColumns);
   }, []);
 
   const getCategoryById = async (id) => {
