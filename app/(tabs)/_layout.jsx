@@ -26,7 +26,7 @@ export default function TabLayout() {
         }}
         />
       <Tabs.Screen 
-        name='inbox'
+        name='AI'
         options={{
           headerShown:false,
           tabBarIcon:({color}) => <Ionicons name="chatbubble-ellipses-outline" size={24} color={color} />
